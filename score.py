@@ -1,14 +1,11 @@
 
 
 def check_four_of_a_kind(hand, suits, numbers, rnum, rlet):
-    for i in numbers:
-        if numbers.count(i) == 4:
-            four = i
-        elif numbers.count(i) == 1:
-            card = i
-    # Four of a Kind → 105 to 119
-    score = 105 + four + card/100
-    return score
+    values = [num % 14 for num in hand]
+    for el in values:
+        if values.count(el) == 4:
+            # Four of a Kind → 105 to 119
+            return 105 + el
 
 
 def check_full_house(hand, suits, numbers, rnum, rlet):

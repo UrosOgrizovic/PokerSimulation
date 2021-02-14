@@ -5,26 +5,36 @@ from score import score_hand
 import pickle
 import helpers
 from sys import getsizeof
+from random import randint
+
 
 def build_deck():
-    numbers = list(range(2, 15))
-    suits = ['H', 'S', 'C', 'D']
-    deck = []
-    for i in numbers:
-        for s in suits:
-            card = s+str(i)
-            deck.append(card)
-    return deck
+    """0 - 12 - hearts
+    13 - 25 - spades
+    26 - 38 - clubs
+    39 - 51 - diamonds
+    e.g. 0 = 2 of hearts, ..., 8 = 10H, 9 = 12H, 10 = 13H, 11 = 14H, 12 = ace of hearts
+    13 = 2 of spades etc.
+
+    Returns:
+        list: list of cards, where each card is a number
+    """
+    return list(range(0, 52))
+
+
+def get_random_card(used_cards):
+    while True:
+        card = randint(0, 51)
+        if card not in used_cards:
+            used_cards.append(card)
+            return card
 
 
 def combinations(arr, n):
     """Returns all possible n-card combinations
     taking into account that order doesn’t matter in Poker
     """
-    arr = np.asarray(arr)
-    t = np.dtype([('', arr.dtype)]*n)
-    result = np.fromiter(itertools.combinations(arr, n), t)
-    return result.view(arr.dtype).reshape(-1, n)
+    return list(itertools.combinations(arr, n))
 
 
 def handvalues(combi):
@@ -38,9 +48,9 @@ def handvalues(combi):
 def all_hands_dataframe(hand_values):
     deck = build_deck()
     # making a list of hands
-    x = [i.get("hand", "") for i in hand_values]
+    x = [i.get("hand") for i in hand_values]
     # making a list of values
-    y = [i.get("value", "") for i in hand_values]
+    y = [i.get("value") for i in hand_values]
     # making a dictionary of hands and values
     data = {'hands': x, 'value': y}
     # making a pandas dataframe with hands and values
