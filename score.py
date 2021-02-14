@@ -1,14 +1,13 @@
 
 
-def check_four_of_a_kind(hand, suits, numbers, rnum, rlet):
-    values = [num % 14 for num in hand]
-    for el in values:
-        if values.count(el) == 4:
+def check_four_of_a_kind(numbers):
+    for num in numbers:
+        if numbers.count(num) == 4:
             # Four of a Kind → 105 to 119
-            return 105 + el
+            return 105 + num
 
 
-def check_full_house(hand, suits, numbers, rnum, rlet):
+def check_full_house(numbers):
     for i in numbers:
         if numbers.count(i) == 3:
             full = i
@@ -19,7 +18,7 @@ def check_full_house(hand, suits, numbers, rnum, rlet):
     return score
 
 
-def check_three_of_a_kind(hand, suits, numbers, rnum, rlet):
+def check_three_of_a_kind(numbers):
     cards = []
     for i in numbers:
         if numbers.count(i) == 3:
@@ -31,7 +30,7 @@ def check_three_of_a_kind(hand, suits, numbers, rnum, rlet):
     return score
 
 
-def check_two_pair(hand, suits, numbers, rnum, rlet):
+def check_two_pair(numbers):
     pairs = []
     cards = []
     for i in numbers:
@@ -45,7 +44,7 @@ def check_two_pair(hand, suits, numbers, rnum, rlet):
     return score
 
 
-def check_pair(hand, suits, numbers, rnum, rlet):
+def check_pair(numbers):
     pair = []
     cards = []
     for i in numbers:
@@ -59,20 +58,18 @@ def check_pair(hand, suits, numbers, rnum, rlet):
     return score
 
 
-def check_straight(numbers, rnum):
-    # a check is necessary because e.g. 8-9-10-11-12 is not a straight
-
-    # five-high straight, i.e. baby straight
-    if 11 in numbers and all(num in [11, 5, 4, 3, 2] for num in numbers):
-        return 5
-    # also check for straights that skip 11 (there are 3 such straights)
-    elif 11 not in numbers and rnum.count(1) == 5 and\
-         all(num in [14, 13, 12, 10, 9] for num in numbers) or\
-         all(num in [13, 12, 10, 9, 8] for num in numbers) or\
-         all(num in [12, 10, 9, 8, 7] for num in numbers) or\
-         max(numbers) - min(numbers) == 4: # diff == 4 => any other straight (e.g. 8-high)
-            return max(numbers)
-    return 0    # no straight
+def get_suits(hand):
+    suits = []
+    for card in hand:
+        if card < 15:   # hearts
+            suits.append(0)
+        elif card < 30: # spades
+            suits.append(1)
+        elif card < 45: # clubs
+            suits.append(2)
+        else:   # diamonds
+            suits.append(3)
+    return suits
 
 
 def score_hand(hand, should_print=True):
@@ -88,51 +85,53 @@ def score_hand(hand, should_print=True):
         Straight Flush → 120 to 134
         Royal Flush → 135
     """
-    # get the suit for each card in the hand
-    suits = [hand[i][:1] for i in range(5)]
-    # get the number for each card in the hand
-    numbers = [int(hand[i][1:]) for i in range(5)]
+    numbers = [card % 15 for card in hand]
     # repetitions for each number
-    rnum = [numbers.count(i) for i in numbers]
+    reps_num = [numbers.count(num) for num in numbers]
+
+    suits = get_suits(hand)
     # repetitions for each suit
-    rlet = [suits.count(i) for i in suits]
+    reps_suit = [suits.count(suit) for suit in suits]
     handtype = ''
     score = 0
-    if 5 in rlet and all(num in [14, 13, 12, 11, 10] for num in numbers):
+    if 5 in reps_suit and all(num in range(10, 15) for num in numbers):
         handtype = 'royal flush'
         score = 135
-    elif 5 in rlet and max(numbers) - min(numbers) <= 5:
-        val = check_straight(numbers, rnum)
-        if val > 0:
-            handtype = 'straight flush'
-            score = 120 + val
-    elif 4 in rnum:
+    elif 5 in reps_suit and reps_num.count(1) == 5 and max(numbers) - min(numbers) == 4:
+        handtype = 'straight flush'
+        score = 120 + max(numbers)
+    elif 5 in reps_suit and all(num in [14, 2, 3, 4, 5] for num in numbers):    # baby straight
+        handtype = 'straight flush'
+        score = 120 + 5
+    elif 4 in reps_num:
         handtype = 'four of a kind'
-        score = check_four_of_a_kind(hand, suits, numbers, rnum, rlet)
-    elif sorted(rnum) == [2, 2, 3, 3, 3]:
+        score = check_four_of_a_kind(numbers)
+    elif sorted(reps_num) == [2, 2, 3, 3, 3]:
         handtype = 'full house'
-        score = check_full_house(hand, suits, numbers, rnum, rlet)
-    elif 5 in rlet:
+        score = check_full_house(numbers)
+    elif 5 in reps_suit:
         handtype = 'flush'
         score = 75 + max(numbers)/100
-    elif rnum.count(1) == 5:
-        val =  check_straight(numbers, rnum)
-        if val > 0:
-            handtype = 'straight'
-            score = 60 + val
-    elif 3 in rnum:
+    elif reps_num.count(1) == 5 and max(numbers) - min(numbers) == 4:
+        handtype = 'straight'
+        score = 60 + max(numbers)
+    elif all(num in [14, 2, 3, 4, 5] for num in numbers):    # baby straight
+        handtype = 'straight'
+        score = 60 + 5
+    elif 3 in reps_num:
         handtype = 'three of a kind'
-        score = check_three_of_a_kind(hand, suits, numbers, rnum, rlet)
-    elif rnum.count(2) == 4:
+        score = check_three_of_a_kind(numbers)
+    elif reps_num.count(2) == 4:
         handtype = 'two pair'
-        score = check_two_pair(hand, suits, numbers, rnum, rlet)
-    elif rnum.count(2) == 2:
+        score = check_two_pair(numbers)
+    elif reps_num.count(2) == 2:
         handtype = 'pair'
-        score = check_pair(hand, suits, numbers, rnum, rlet)
+        score = check_pair(numbers)
     else:
         handtype = 'high card'
         n = sorted(numbers, reverse=True)
         score = n[0] + n[1]/100 + n[2]/1000 + n[3]/10000 + n[4]/100000
+    score = round(score, 2)
     if should_print:
         print('this hand is a %s with score: %s' % (handtype, score))
 
@@ -140,15 +139,26 @@ def score_hand(hand, should_print=True):
 
 
 if __name__ == '__main__':
-    hand1 = ['H2', 'S2', 'C2', 'D2', 'H3']  # four of a kind
-    hand2 = ['H3', 'H4', 'H5', 'H6', 'H7']  # straight flush
-    hand3 = ['H7', 'H9', 'H2', 'H6', 'H13'] # flush
-    hand4 = ['C12', 'H12', 'H3', 'D3', 'S4']    # two pair
-    hand5 = ['H11', 'H12', 'H14', 'H10', 'H13'] # royal flush
-    hand6 = ['H14', 'H13', 'H12', 'H11', 'H10'] # royal flush
-    hand7 = ['C8', 'S5', 'D6', 'H7', 'D9']  # straight
-    hand8 = ['C9', 'S14', 'D13', 'H12', 'D10']  # straight
-    hand9 = ['C3', 'S2', 'D11', 'H5', 'D4']  # baby straight, i.e. high-five straight
+    hand1 = [2, 17, 32, 47, 3]  # four of a kind (four twos)
+    hand2 = list(range(3, 8))  # straight flush
+    hand3 = [7, 9, 2, 6, 13] # flush
+    hand4 = [41, 11, 3, 48, 19] # two pair  ['C12', 'H12', 'H3', 'D3', 'S4']
+    hand5 = [11, 12, 14, 10, 13] # royal flush
+    hand6 = [14, 13, 12, 11, 10] # royal flush
+    hand7 = [38, 20, 51, 7, 54]  # straight ['C8', 'S5', 'D6', 'H7', 'D9']
+    hand8 = [39, 28, 57, 11, 55]  # straight    ['C9', 'S14', 'D13', 'H12', 'D10']
+    hand9 = [33, 17, 59, 5, 49]  # baby straight, i.e. high-five straight ['C3', 'S2', 'D11', 'H5', 'D4']
+    hand10 = [7, 22, 37, 48, 3] # full house ['H7', 'S7', 'C7', 'D3', 'H3']
+
+    hand11 = [13, 28, 43, 59, 10]   # three of a kind ['HK', 'SK', 'CK', 'DA', 'H10']
+    hand12 = [13, 28, 43, 57, 10]   # three of a kind ['HK', 'SK', 'CK', 'D13', 'H10']
+    # hand12 score is lower than hand11 score because of the high card (A vs 13)
+
+    hand13 = [8, 23, 36, 51, 3] # two pair ['H8', 'S8', 'C6', 'D6', 'H3']
+    hand14 = [7, 22, 34, 56, 3] # pair ['H7', 'S7', 'C4', 'D12', 'H3']
+    hand15 = [14, 17, 33, 51, 55]   # high card ['HA', 'S2', 'C3', 'D6', 'D10']
+    hand16 = [7, 17, 33, 51, 41]   # high card ['H7', 'S2', 'C3', 'D6', 'D12']
+    
     score_hand(hand1)
     score_hand(hand2)
     score_hand(hand3)
@@ -158,3 +168,10 @@ if __name__ == '__main__':
     score_hand(hand7)
     score_hand(hand8)
     score_hand(hand9)
+    score_hand(hand10)
+    score_hand(hand11)
+    score_hand(hand12)
+    score_hand(hand13)
+    score_hand(hand14)
+    score_hand(hand15)
+    score_hand(hand16)
