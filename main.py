@@ -1,11 +1,15 @@
 import numpy as np
-from constants import deck, c_5, all_hands_df, TOTAL_NUM_COMBINATIONS, NUM_PLAYERS
-from cards import get_random_card, combinations
+from constants import DECK, c_5, all_hands_df, TOTAL_NUM_COMBINATIONS, NUM_PLAYERS, ALPHA,\
+                      GAMMA, STATES, DECK_DICTIONARY
+from cards import get_random_card
 import helpers
 from evaluate import expected_value, should_call
-from score import score_hand
+from score import score_hand, score_hands
+from policy import greedy_policy, eps_greedy_policy, softmax_policy,\
+                   get_action_by_policy_name
 
-def sarsa_q_learning(q, s, a, alpha, r, gamma, s_prime, player_score, is_sarsa=True, policy_name='greedy'):
+
+def sarsa_q_learning(q, s, a, alpha, r, gamma, s_prime, is_sarsa=True, policy_name='greedy'):
     """
     SARSA - on-policy temporal difference algorithm
     q(s, a) = q(s, a) + alpha * (r + gamma * q(s', a') - q(s, a))
@@ -18,116 +22,119 @@ def sarsa_q_learning(q, s, a, alpha, r, gamma, s_prime, player_score, is_sarsa=T
 
     it runs after each move
 
-    :param q: all q-values
-    :param s: old state
-    :param a: old action
-    :param alpha: learning rate
-    :param r: reward
-    :param gamma: discount factor
-    :param s_prime: new state
-    :param player_score: current player score
-    :param is_sarsa: True (sarsa) or False (q-learning)
-    :param policy_name: name of policy
-    :return:
+    q (dict): all q-values - format:
+              state (type: list) - a hand consisting of 5 cards
+              action (type: dict) - how good is each possible action {'bet': value, 'fold': value}
+    s (list): old state, i.e. list of 5 cards
+    a (string): old action ('bet' or 'fold')
+    alpha (float): learning rate
+    r (float): reward
+    gamma (float): discount factor
+    s_prime (list): new state, i.e. list of 5 cards
+    is_sarsa (boolean): True (sarsa) or False (q-learning)
+    policy_name (string): name of policy ('greedy', 'eps_greedy' or 'softmax');
+                        matters only if is_sarsa is True
+
     """
     if is_sarsa:
         a_prime = get_action_by_policy_name(q, s_prime, policy_name)
     else:
-        a_prime = greedy_policy(q[player_score])  # use greedy policy for q-learning
+        a_prime = greedy_policy(q[s_prime])  # use greedy policy for q-learning
 
-    new_q_value = 0  # all terminal nodes are initialized to zero
-    if s_prime < 21:
-        new_q_value = q[s_prime][a_prime]
+    new_q_value = q[s_prime][a_prime]
 
     q[s][a] = q[s][a] + alpha * (r + gamma * new_q_value - q[s][a])
     return q
 
 
-def simulate_flop(used_cards, cards_on_table, player_hand, states_actions):
-    # TODO: implement
-    for i in range(3):
-        cards_on_table.append(get_random_card(used_cards))
-    cards_on_table.extend(player_hand)
-    c_3 = tuple([tuple(comb) for comb in combinations(cards_on_table, 3)])
-    c_4 = tuple([tuple(comb) for comb in combinations(cards_on_table, 4)])
-    flopscore = expected_value(cards_on_table, c_3, c_4)
-    current = all_hands_df.loc[all_hands_df['value'] >= flopscore[0]].index[0]/TOTAL_NUM_COMBINATIONS
-    future = all_hands_df.loc[all_hands_df['value'] >= flopscore[1]].index[0]/TOTAL_NUM_COMBINATIONS
-    bet_fold = ''
-    # TODO: use QL instead of should_call to determine what to do
-    if current > future:
-        bet_fold = should_call(NUM_PLAYERS, current)
-    else:
-        bet_fold = should_call(NUM_PLAYERS, future)
-    states_actions[c_5.index(cards)] = bet_fold
+def sort_cards(cards):
+    return tuple(sorted(cards))
 
 
-def simulate_turn(used_cards, cards_on_table, player_hand, states_actions):
-    cards_on_table.append(get_random_card(used_cards))
-    cards_on_table.extend(player_hand)
-    c_4 = tuple([tuple(comb) for comb in combinations(cards_on_table, 4)])
-    combiturn = expected_value(cards_on_table, None, c_4)
-    current = all_hands_df.loc[all_hands_df['value'] >= combiturn[0]].index[0]/TOTAL_NUM_COMBINATIONS
-    future  = all_hands_df.loc[all_hands_df['value'] >= combiturn[1]].index[0]/TOTAL_NUM_COMBINATIONS
-    bet_fold = ''
-    if  current > future:
-        bet_fold = should_call(NUM_PLAYERS, current)
-    else:
-        bet_fold = should_call(NUM_PLAYERS, future)
-    states_actions[c_5.index(cards)] = bet_fold
+def get_best_hand(cards):
+    best_hand, best_score = (), 0
+    for comb in helpers.combinations(cards, 5):
+        val, _ = score_hand(comb, False)
+        if val > best_score:
+            best_hand, best_score = comb, val
+    return sort_cards(best_hand)
 
 
-def simulate_river(used_cards, cards_on_table, player_hand, states_actions):
-    cards_on_table.append(get_random_card(used_cards))
-    cards_on_table.extend(player_hand)
-    combiriver = expected_value(cards_on_table, None, None)
-    current = all_hands_df.loc[all_hands_df['value'] >= combiriver[0]].index[0]/TOTAL_NUM_COMBINATIONS
-    bet_fold = should_call(current)
-    states_actions[c_5.index(cards)] = bet_fold
-    return current
-
-
-def simulate_game(q):
-    used_cards = []
-    cards_on_table = []
-    states_actions = []
+def simulate_game(q, policy_name):
+    used_cards = set()
+    states_actions = {}
     hand1 = (get_random_card(used_cards), get_random_card(used_cards))
+    cards_on_table = list(hand1)
     hand2 = (get_random_card(used_cards), get_random_card(used_cards))
-    simulate_flop(used_cards, cards_on_table, hand1, states_actions)
-    simulate_turn(used_cards, cards_on_table, hand1, states_actions)
-    val1 = simulate_river(used_cards, cards_on_table, hand1, states_actions)
-    val2 = simulate_river(used_cards, cards_on_table, hand2, states_actions)
-    print(used_cards)
-    print(hand1, val1)
-    print(hand2, val2)
-    print(cards_on_table)
-    print('Game over')
-    if val1 > val2:
-        for state, action in states_actions:
-            q[state][action] += 0.5
-    elif val1 < val2:
-        for state, action in states_actions:
-            q[state][action] -= 0.5
-    print(max(q.values()))
+    s_primes = []
+    is_game_over = False
+    for _ in range(3):  # generate flop
+        cards_on_table.append(get_random_card(used_cards))
+
+    while len(cards_on_table) < 7 and not is_game_over:
+        best_hand = get_best_hand(cards_on_table)
+        a = get_action_by_policy_name(q, best_hand, policy_name)
+
+        states_actions[best_hand] = a
+        if a == 'bet':
+            cards_on_table.append(get_random_card(used_cards)) # s_prime
+            # choose best state to add to s_primes
+            s_primes.append(get_best_hand(cards_on_table))
+        else:   # fold
+            s_primes.append(sort_cards(cards_on_table))
+
+    best_h1, val1, handtype1, best_h2, val2, handtype2 = score_hands(hand1, hand2, cards_on_table[2:], False)
+    reward = 1
+    if val1 < val2:
+        reward = -1
+    elif val1 == val2:
+        reward = 0
+
+    idx = 0
+
+    for state, action in states_actions.items():
+        sarsa_q_learning(q, state, action, ALPHA, reward, GAMMA, s_primes[idx], False)
+        idx += 1
+
+    # print(f'val1 {val1} val2 {val2}')
+    # print([DECK_DICTIONARY[card] for card in used_cards])
+    # print([DECK_DICTIONARY[card] for card in hand1], val1)
+    # print(f'Best h1 {[DECK_DICTIONARY[card] for card in best_h1]} {handtype1}')
+    # print([DECK_DICTIONARY[card] for card in hand2], val2)
+    # print(f'Best h2 {[DECK_DICTIONARY[card] for card in best_h2]} {handtype2}')
+    # print(f'Cards on table {[DECK_DICTIONARY[card] for card in cards_on_table]}')
+    # print('Game over')
+
+
+    return q
     '''TODO:
     1. flop
     2. turn
     3. river
     4. update state values (SARSA, Q-learning, TDL, Monte Carlo)
+    5. display who won
     '''
+
+
+def initialize_q():
+    q = {val: {'bet': 0.0, 'fold': 0.0} for val in STATES}   # initialize q values
+    return q
 
 
 if __name__ == '__main__':
     ''' q values format:
-    state (type: list) - current hand consisting of 5 cards
+    state (type: tuple) - a hand consisting of 2 or 5 cards
     action (type: dict) - how good is each possible action {'bet': value, 'fold': value}
     '''
-    # q = helpers.load_object('q_values.pkl')
-    print(len(c_5))
-    # use index in c_5 as key because lists and np.arrays are unhashable, i.e. can't be used as keys
-    q = {i: {'bet': 0.0, 'fold': 0.0} for i in range(len(c_5))}
-    num_games = 10
-    simulate_game(q)
-    # for i in range(num_games):
-    #     simulate_game(q)
+    q = helpers.load_object('q_values.pkl')
+    # q = initialize_q()
+    # exit()
+    policy_name = 'greedy'
+    num_games = 100
+    for _ in range(num_games):
+        q = simulate_game(q, policy_name)
+    for k, v in q.items():
+        if v['bet'] != 0 or v['fold'] != 0:
+            print(k, v)
     # helpers.dump_object(q, 'q_values.pkl')
+

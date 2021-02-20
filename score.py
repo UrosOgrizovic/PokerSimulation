@@ -1,4 +1,4 @@
-
+from helpers import combinations
 
 def check_four_of_a_kind(numbers):
     for num in numbers:
@@ -135,7 +135,27 @@ def score_hand(hand, should_print=True):
     if should_print:
         print('this hand is a %s with score: %s' % (handtype, score))
 
-    return score
+    return score, handtype
+
+
+def score_hands(hand1, hand2, cards_on_table, should_print_each=True):
+    c_3 = combinations(cards_on_table, 3)
+    best_h1, max1, handtype1 = (), 0, ''    # max scores for each player
+    best_h2, max2, handtype2 = (), 0, ''
+    for comb in c_3:
+        val1, ht1 = score_hand(comb + hand1, should_print_each)
+        val2, ht2 = score_hand(comb + hand2, should_print_each)
+        if val1 > max1:
+            max1 = val1
+            best_h1 = comb + hand1
+            handtype1 = ht1
+        if val2 > max2:
+            max2 = val2
+            best_h2 = comb + hand2
+            handtype2 = ht2
+    return best_h1, max1, handtype1, best_h2, max2, handtype2
+
+
 
 
 if __name__ == '__main__':
@@ -158,7 +178,7 @@ if __name__ == '__main__':
     hand14 = [7, 22, 34, 56, 3] # pair ['H7', 'S7', 'C4', 'D12', 'H3']
     hand15 = [14, 17, 33, 51, 55]   # high card ['HA', 'S2', 'C3', 'D6', 'D10']
     hand16 = [7, 17, 33, 51, 41]   # high card ['H7', 'S2', 'C3', 'D6', 'D12']
-    
+
     score_hand(hand1)
     score_hand(hand2)
     score_hand(hand3)

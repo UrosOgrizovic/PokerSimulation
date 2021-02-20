@@ -1,4 +1,4 @@
-from cards import combinations
+from helpers import combinations
 from constants import c_5, all_hands_df, TOTAL_NUM_COMBINATIONS, NUM_PLAYERS
 from score import score_hand
 from numba import jit
@@ -18,7 +18,7 @@ def should_call(percentile):
 
 
 @jit(nopython=True)
-def common(a,b):
+def common(a, b):
     common = []
     l1 = [i for i in a]
     l2 = [i for i in b]
@@ -27,7 +27,7 @@ def common(a,b):
 
 
 @jit(nopython=True)
-def numba_4(c_4):
+def numba_4(c_4, c_5):
     results = []
     len1 = np.array(c_4).shape[0]
     len2 = np.array(c_5).shape[0]
@@ -39,7 +39,7 @@ def numba_4(c_4):
 
 
 @jit(nopython=True)
-def numba_3(c_3):
+def numba_3(c_3, c_5):
     results = []
     len1 = np.array(c_3).shape[0]
     len2 = np.array(c_5).shape[0]
@@ -51,24 +51,24 @@ def numba_3(c_3):
 
 
 @lru_cache(maxsize=None)
-def opti_3(c_3):
-    values = numba_3(c_3)
+def opti_3(c_3, c_5):
+    values = numba_3(list(c_3), list(c_5))
     return [score_hand(i, False) for i in values]
 
 
 @lru_cache(maxsize=None)
-def opti_4(c_4):
-    values = numba_4(c_4)
+def opti_4(c_4, c_5):
+    values = numba_4(list(c_4), list(c_5))
     return [score_hand(i, False) for i in values]
 
 
-def expected_value(hand, c_3, c_4):
+def expected_value(hand, c_3, c_4, c_5):
     if len(hand) == 5:  # flop
         maxi = score_hand(hand, False)
-        mean = np.mean(opti_3(c_3) + opti_4(c_4))
+        mean = np.mean(opti_3(c_3, c_5) + opti_4(c_4, c_5))
     elif len(hand) == 6:    # turn
         maxi = max([score_hand(i, False) for i in combinations(hand, 5)])
-        mean = np.mean(opti_4(c_4))
+        mean = np.mean(opti_4(c_4, c_5))
     elif len(hand) == 7:    # river
         maxi = max([score_hand(i, False) for i in combinations(hand, 5)])
         mean = maxi
@@ -78,18 +78,12 @@ def expected_value(hand, c_3, c_4):
 
 if __name__ == '__main__':
     # FLOP
-    # flop = []
-    flop = ['H10', 'H11', 'H12', 'H13', 'H14']  # TODO: remove, this is only temporary
+    flop = [10, 14, 11, 12, 3]
 
-    # for i in range(2):
-    #     flop.append(str(input('enter hand card: ')))
-
-    # for i in range(3):
-    #     flop.append(str(input('enter flop card: ')))
-
-    c_4 = combinations(flop, 4)
-    c_3 = combinations(flop, 3)
-    flopscore = expected_value(flop, c_5)
+    c_5 = np.array(c_5)
+    c_4 = np.array(combinations(flop, 4))
+    c_3 = np.array(combinations(flop, 3))
+    flopscore = expected_value(flop, c_3, c_4, c_5)
     print(f'Flopscore {flopscore}')
     current = all_hands_df.loc[all_hands_df['value'] >= flopscore[0]].index[0]/TOTAL_NUM_COMBINATIONS
     future = all_hands_df.loc[all_hands_df['value'] >= flopscore[1]].index[0]/TOTAL_NUM_COMBINATIONS
@@ -100,12 +94,9 @@ if __name__ == '__main__':
         should_call(future)
 
     # TURN
-    turn = []
-
-    turn.append(str(input('enter turn card: ')))
-    flop.append(turn[0])
+    flop.append(13)
     c4 = np.array([sorted(i) for i in combinations(flop, 4)])
-    combiturn = expected_value(flop, c_5)
+    combiturn = expected_value(flop, c_3, c_4, c_5)
     current = all_hands_df.loc[all_hands_df['value'] >= combiturn[0]].index[0]/TOTAL_NUM_COMBINATIONS
     future  = all_hands_df.loc[all_hands_df['value'] >= combiturn[1]].index[0]/TOTAL_NUM_COMBINATIONS
     print('My current value is %s and the average future value is %s' % (current, future))
@@ -116,10 +107,9 @@ if __name__ == '__main__':
         should_call(future)
 
     # RIVER
-    river = []
-    river.append(str(input('enter river card: ')))
-    flop.append(river[0])
-    combiriver = expected_value(flop, c_5)
+    flop.append(42)
+    combiriver = expected_value(flop, c_3, c_4, c_5)
     current = all_hands_df.loc[all_hands_df['value'] >= combiriver[0]].index[0]/TOTAL_NUM_COMBINATIONS
     print('My final value is %s' % current)
-    should_call(current)
+    decision = should_call(current)
+    print(f'Decision {decision}')
