@@ -35,8 +35,8 @@ c_5 = helpers.load_object('c_5.pkl')
 hand_values_c_5 = helpers.load_object('hand_values_c_5.pkl')
 all_hands_df = helpers.load_object('all_hands_df.pkl')
 
-ALPHA = 0.1
-GAMMA = 0.1
+ALPHA = 0.6
+GAMMA = 0.4
 
 if __name__ == '__main__':
    print(type(c_5))
