@@ -1,9 +1,8 @@
 import numpy as np
-from constants import DECK, c_5, all_hands_df, TOTAL_NUM_COMBINATIONS, NUM_PLAYERS, ALPHA,\
-                      GAMMA, DECK_DICTIONARY
+from constants import DECK, c_5, ALPHA, GAMMA, DECK_DICTIONARY,\
+                      hand_values_c_5
 from cards import get_random_card
 import helpers
-from evaluate import expected_value, should_call
 from score import score_hand, score_hands
 from policy import greedy_policy, eps_greedy_policy, softmax_policy,\
                    get_action_by_policy_name
@@ -58,7 +57,8 @@ def sort_cards(cards):
 def get_best_hand(cards):
     best_hand, best_score = (), 0
     for comb in helpers.combinations(cards, 5):
-        val, _ = score_hand(comb, False)
+        # use cached values instead of calling score_hand()
+        val, _ = hand_values_c_5[tuple(sorted(comb))]
         if val > best_score:
             best_hand, best_score = comb, val
     return sort_cards(best_hand)
@@ -124,7 +124,12 @@ def simulate_game(q, policy_name, is_sarsa):
     return q
 
 
-
+def get_num_changed_states(q):
+    changed = 0
+    for k, v in q.items():
+        if v['bet'] != 0 or v['fold'] != 0:
+            changed += 1
+    return changed
 
 
 if __name__ == '__main__':
@@ -155,9 +160,6 @@ if __name__ == '__main__':
             print(f'Game index {i}')
         q = simulate_game(q, policy_name, is_sarsa)
 
-    changed = 0
-    for k, v in q.items():
-        if v['bet'] != 0 or v['fold'] != 0:
-            changed += 1
+    changed = get_num_changed_states(q)
     print(changed)
-    helpers.dump_object(q, q_values_path)
+    # helpers.dump_object(q, q_values_path)

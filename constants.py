@@ -1,12 +1,5 @@
 import helpers
 
-# total number of 5-card combinations from a 52-card deck
-TOTAL_NUM_COMBINATIONS_5 = 2598960
-TOTAL_NUM_COMBINATIONS_2 = 1326
-TOTAL_NUM_COMBINATIONS = TOTAL_NUM_COMBINATIONS_2 + TOTAL_NUM_COMBINATIONS_5
-
-NUM_PLAYERS = 2
-
 """2 - 14 - hearts
    17 - 29 - spades
    32 - 44 - clubs
@@ -28,12 +21,9 @@ DECK_DICTIONARY = {2: '2H', 3: '3H', 4: '4H', 5: '5H', 6: '6H', 7: '7H', 8: '8H'
                    47: '2D', 48: '3D', 49: '4D', 50: '5D', 51: '6D', 52: '7D', 53: '8D', 54: '9D',
                    55: '10D', 56: '12D', 57: '13D', 58: '14D', 59: 'AD',}
 
-STATES = helpers.load_object('states.pkl')
-
 c_2 = helpers.load_object('c_2.pkl')
 c_5 = helpers.load_object('c_5.pkl')
-hand_values_c_5 = helpers.load_object('hand_values_c_5.pkl')
-all_hands_df = helpers.load_object('all_hands_df.pkl')
+hand_values_c_5 = helpers.load_object('hand_values_c_5.pkl')   # {hand: (score, handtype)}
 
 ALPHA = 0.6
 GAMMA = 0.4
