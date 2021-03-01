@@ -31,9 +31,9 @@ def get_q_values_path(is_sarsa, policy_name):
 
 def initialize_q():
     states = load_object('states.pkl')
-    q = {state: {'bet': 0.0, 'fold': 0.0} for state in states}   # initialize q values
+    q = {state: {'bet': 0.0, 'fold': 0.0} for state in states}
     return q
-
+    
 
 def get_q_values_object(q_values_path):
     if os.path.exists(q_values_path):

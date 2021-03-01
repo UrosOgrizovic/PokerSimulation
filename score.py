@@ -38,7 +38,7 @@ def check_two_pair(numbers):
             pairs.append(i)
         elif numbers.count(i) == 1:
             cards.append(i)
-            cards = sorted(cards, reverse=True)
+    cards = sorted(cards, reverse=True)
     # Two Pair → 30 to 44
     score = 30 + max(pairs) + min(pairs)/100 + cards[0]/1000
     return score
@@ -52,7 +52,7 @@ def check_pair(numbers):
             pair.append(i)
         elif numbers.count(i) == 1:
             cards.append(i)
-            cards = sorted(cards, reverse=True)
+    cards = sorted(cards, reverse=True)
     # Pair → 15 to 29
     score = 15 + pair[0] + cards[0]/100 + cards[1]/1000 + cards[2]/10000
     return score
@@ -154,8 +154,6 @@ def score_hands(hand1, hand2, cards_on_table, should_print_each=True):
             best_h2 = comb + hand2
             handtype2 = ht2
     return best_h1, max1, handtype1, best_h2, max2, handtype2
-
-
 
 
 if __name__ == '__main__':
