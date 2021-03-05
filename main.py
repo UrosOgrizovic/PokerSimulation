@@ -135,7 +135,9 @@ if __name__ == '__main__':
     ''' q values format:
     state (type: tuple) - a hand consisting of 2 or 5 cards
     action (type: dict) - how good is each possible action {'bet': value, 'fold': value}
-    There are (52 5) = 2598960 possible states
+    (52 choose 2) = 1326 - number of 2-card combinations
+    (52 choose 5) = 2598960 - number of 5-card combinations
+    There are 1326 + 2598960 = 2600286 possible states.
     Q-learning:
         Number of games simulated: 10^7
         Number of states changed: 2424687
