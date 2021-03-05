@@ -39,10 +39,6 @@ def sarsa_q_learning(q, s, a, alpha, r, gamma, s_prime, is_sarsa=True, policy_na
 
     new_q_value = q[s_prime][a_prime]
 
-    # if q[s][a] != 0:
-    #     print(q[s][a], q[s][a] + alpha * (r + gamma * new_q_value - q[s][a]))
-    #     exit()
-
     q[s][a] = round(q[s][a] + alpha * (r + gamma * new_q_value - q[s][a]), 2)
     return q
 
@@ -64,32 +60,46 @@ def get_best_hand(cards):
 def simulate_game(q, policy_name, is_sarsa, num_bets, num_folds):
     used_cards = set()
     states_actions = {} # actions for hands of first player (i.e. bot)
-    hand1 = (get_random_card(used_cards), get_random_card(used_cards))
+    hand1 = sort_cards((get_random_card(used_cards), get_random_card(used_cards)))
     cards_on_table = list(hand1)
-    hand2 = (get_random_card(used_cards), get_random_card(used_cards))
+    hand2 = sort_cards((get_random_card(used_cards), get_random_card(used_cards)))
     s_primes = []
     is_game_over = False
-    for _ in range(3):  # generate flop
-        cards_on_table.append(get_random_card(used_cards))
 
-    while not is_game_over:
-        best_hand = get_best_hand(cards_on_table)
-        a = get_action_by_policy_name(q, best_hand, policy_name, is_sarsa)
+    # preflop
+    a = get_action_by_policy_name(q, hand1, policy_name, is_sarsa)
+    states_actions[hand1] = a
 
-        states_actions[best_hand] = a
-        if len(cards_on_table) < 7: # if river, don't add any cards
-            if a == 'bet':
-                cards_on_table.append(get_random_card(used_cards)) # s_prime
-                num_bets += 1   # for report
-            else:   # fold
-                is_game_over = True
-                num_folds += 1  # for report
-            # choose best state to add to s_primes
-            s_primes.append(get_best_hand(cards_on_table))
-        else:
-            # choose best state to add to s_primes
-            s_primes.append(get_best_hand(cards_on_table))
-            break
+    if a == "bet":  # play on
+        num_bets += 1
+
+        for _ in range(3):  # generate flop
+            cards_on_table.append(get_random_card(used_cards))
+
+        # this is s_prime for s=hand1, i.e. the flop is s_prime for preflop
+        s_primes.append(get_best_hand(cards_on_table))
+
+        while not is_game_over:
+            best_hand = get_best_hand(cards_on_table)
+            a = get_action_by_policy_name(q, best_hand, policy_name, is_sarsa)
+
+            states_actions[best_hand] = a
+            if len(cards_on_table) < 7: # if river, don't add any cards
+                if a == 'bet':
+                    cards_on_table.append(get_random_card(used_cards)) # s_prime
+                    num_bets += 1   # for report
+                else:   # fold
+                    is_game_over = True
+                    num_folds += 1  # for report
+                # choose best state to add to s_primes
+                s_primes.append(get_best_hand(cards_on_table))
+            else:
+                # choose best state to add to s_primes
+                s_primes.append(get_best_hand(cards_on_table))
+                break
+    else:
+        num_folds += 1
+        s_primes.append(hand1)
 
     best_h1, val1, handtype1, best_h2, val2, handtype2 = score_hands(hand1, hand2, cards_on_table[2:], False)
     reward = 1
@@ -139,33 +149,33 @@ if __name__ == '__main__':
     (52 choose 5) = 2598960 - number of 5-card combinations
     There are 1326 + 2598960 = 2600286 possible states.
     Q-learning:
-        Number of games simulated: 10^7
-        Number of states changed: 2424687
-        Number of bets: 8420670
-        Number of folds: 6906658
+        Number of games simulated: 10^8
+        Number of states changed: 2592084
+        Number of bets: 45321468
+        Number of folds: 93473472
     SARSA (softmax policy):
-        Number of games simulated: 10^7
-        Number of states changed: 2178159
-        Number of bets: 904529
-        Number of folds: 9916007
+        Number of games simulated: 10^8
+        Number of states changed: 2180564
+        Number of bets: 17153597
+        Number of folds: 99616300
     SARSA (eps_greedy policy):
-        Number of games simulated: 10^7
-        Number of states changed: 2421154
-        Number of bets: 8106359
-        Number of folds: 7120968
+        Number of games simulated: 10^8
+        Number of states changed: 2598760
+        Number of bets: 80094992
+        Number of folds: 89127500
     '''
-    is_sarsa = True
-    policy_name = 'softmax'
+    is_sarsa = False
+    policy_name = 'greedy'
     q_values_path = helpers.get_q_values_path(is_sarsa, policy_name)
     q = helpers.get_q_values_object(q_values_path)
     # q = helpers.initialize_q()
 
     num_bets, num_folds = 0, 0
-    num_games = 10**7
+    num_games = 10**8
     for i in range(num_games):
         if i > 0.5 * num_games:
             ALPHA *= 0.5    # reduce learning rate
-        if i % 1000000 == 0:
+        if i % 10**7 == 0:
             print(f'Game index {i}')
         q, num_bets, num_folds = simulate_game(q, policy_name, is_sarsa, num_bets, num_folds)
 
@@ -173,4 +183,4 @@ if __name__ == '__main__':
     print(f'Num states changed: {changed}')
     print(f'Num bets made: {num_bets}')
     print(f'Num folds made: {num_folds}')
-    helpers.dump_object(q, q_values_path)
+    # helpers.dump_object(q, q_values_path)

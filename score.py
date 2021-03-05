@@ -54,7 +54,10 @@ def check_pair(numbers):
             cards.append(i)
     cards = sorted(cards, reverse=True)
     # Pair → 15 to 29
-    score = 15 + pair[0] + cards[0]/100 + cards[1]/1000 + cards[2]/10000
+    score = 15 + pair[0]
+    if len(numbers) > 2:   # post-preflop
+        # Pair → 15 to 29
+        score += cards[0]/100 + cards[1]/1000 + cards[2]/10000
     return score
 
 
@@ -94,6 +97,7 @@ def score_hand(hand, should_print=True):
     reps_suit = [suits.count(suit) for suit in suits]
     handtype = ''
     score = 0
+
     if 5 in reps_suit and all(num in range(10, 15) for num in numbers):
         handtype = 'royal flush'
         score = 135
@@ -130,7 +134,10 @@ def score_hand(hand, should_print=True):
     else:
         handtype = 'high card'
         n = sorted(numbers, reverse=True)
-        score = n[0] + n[1]/100 + n[2]/1000 + n[3]/10000 + n[4]/100000
+        if len(hand) == 2:  # preflop
+            score = n[0] + n[1]/100
+        else:
+            score = n[0] + n[1]/100 + n[2]/1000 + n[3]/10000 + n[4]/100000
     score = round(score, 2)
     if should_print:
         print('this hand is a %s with score: %s' % (handtype, score))
@@ -139,20 +146,26 @@ def score_hand(hand, should_print=True):
 
 
 def score_hands(hand1, hand2, cards_on_table, should_print_each=True):
-    c_3 = combinations(cards_on_table, 3)
-    best_h1, max1, handtype1 = (), 0, ''    # max scores for each player
-    best_h2, max2, handtype2 = (), 0, ''
-    for comb in c_3:
-        val1, ht1 = score_hand(comb + hand1, should_print_each)
-        val2, ht2 = score_hand(comb + hand2, should_print_each)
-        if val1 > max1:
-            max1 = val1
-            best_h1 = comb + hand1
-            handtype1 = ht1
-        if val2 > max2:
-            max2 = val2
-            best_h2 = comb + hand2
-            handtype2 = ht2
+    if len(cards_on_table) == 0:
+        max1, handtype1 = score_hand(hand1, should_print_each)
+        best_h1 = hand1
+        max2, handtype2 = score_hand(hand2, should_print_each)
+        best_h2 = hand2
+    else:
+        c_3 = combinations(cards_on_table, 3)
+        best_h1, max1, handtype1 = (), 0, ''    # max scores for each player
+        best_h2, max2, handtype2 = (), 0, ''
+        for comb in c_3:
+            val1, ht1 = score_hand(comb + hand1, should_print_each)
+            val2, ht2 = score_hand(comb + hand2, should_print_each)
+            if val1 > max1:
+                max1 = val1
+                best_h1 = comb + hand1
+                handtype1 = ht1
+            if val2 > max2:
+                max2 = val2
+                best_h2 = comb + hand2
+                handtype2 = ht2
     return best_h1, max1, handtype1, best_h2, max2, handtype2
 
 
