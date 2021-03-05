@@ -8,9 +8,9 @@ In a regular 52-card deck, there are <img src="https://render.githubusercontent.
 
 Q-values format: `{state: action}` pairs; `state (type: tuple)` - a hand consisting of 2 or 5 cards, `action (type: dict)` - how good each possible action is (`{'bet': value, 'fold': value}`).
 
-Three policies/algorithms were used to update the q-values of the possible states: Q-learning with a greedy policy, SARSA with a softmax policy and SARSA with an epsilon-greedy policy. The bot was trained on 10 million hands for each of these algorithms, where each hand consists of a flop, a turn and a river.
+Three policies were used to update the q-values of the possible states: Q-learning with a greedy policy, SARSA with a softmax policy and SARSA with an epsilon-greedy policy. The bot was trained on 100 million hands for each of these policies, where each hand consists of a preflop, a flop, a turn and a river.
 
-# Number of bets/folds per training algorithm
+# Number of bets/folds per policy
 ![Chart](https://github.com/UrosOgrizovic/PokerSimulation/blob/main/Report.png)
 
 "Aggressive" play was encouraged by the greedy policy, since the "bet" action was chosen even if the q-values for "bet" and "fold" were equal. Consequently, the same kind of play was also encouraged by the epsilon-greedy policy.
@@ -18,7 +18,7 @@ Three policies/algorithms were used to update the q-values of the possible state
 Of the three policies, SARSA softmax unsurprisingly made by far the fewest number of bets - a fact that undoubtedly stems from the definition of softmax.
 
 # Scoring hands
-Diego Salinas's [blog post](https://towardsdatascience.com/poker-with-python-how-to-score-all-hands-in-texas-holdem-6fd750ef73d).
+For details, see Diego Salinas's [blog post](https://towardsdatascience.com/poker-with-python-how-to-score-all-hands-in-texas-holdem-6fd750ef73d).
 
 # Pickle
-Pickle was used to dump the q-values of an algorithm into a file, thus caching them for further use. Each of the resulting files is roughly 115MB in size.
+Pickle was used to dump the q-values of a policy into a file, thus caching them for further use. Each of the resulting files is roughly 115MB in size.
