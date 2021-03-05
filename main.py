@@ -61,7 +61,7 @@ def get_best_hand(cards):
     return sort_cards(best_hand)
 
 
-def simulate_game(q, policy_name, is_sarsa):
+def simulate_game(q, policy_name, is_sarsa, num_bets, num_folds):
     used_cards = set()
     states_actions = {} # actions for hands of first player (i.e. bot)
     hand1 = (get_random_card(used_cards), get_random_card(used_cards))
@@ -80,8 +80,10 @@ def simulate_game(q, policy_name, is_sarsa):
         if len(cards_on_table) < 7: # if river, don't add any cards
             if a == 'bet':
                 cards_on_table.append(get_random_card(used_cards)) # s_prime
+                num_bets += 1   # for report
             else:   # fold
                 is_game_over = True
+                num_folds += 1  # for report
             # choose best state to add to s_primes
             s_primes.append(get_best_hand(cards_on_table))
         else:
@@ -118,7 +120,7 @@ def simulate_game(q, policy_name, is_sarsa):
     #     print([DECK_DICTIONARY[card] for card in state], action)
     # print('Game over')
 
-    return q
+    return q, num_bets, num_folds
 
 
 def get_num_changed_states(q):
@@ -136,27 +138,37 @@ if __name__ == '__main__':
     There are (52 5) = 2598960 possible states
     Q-learning:
         Number of games simulated: 10^7
-        Number of states changed: 2421616
+        Number of states changed: 2424687
+        Number of bets: 8420670
+        Number of folds: 6906658
     SARSA (softmax policy):
         Number of games simulated: 10^7
-        Number of states changed: 2178870
+        Number of states changed: 2178159
+        Number of bets: 904529
+        Number of folds: 9916007
     SARSA (eps_greedy policy):
         Number of games simulated: 10^7
         Number of states changed: 2421154
+        Number of bets: 8106359
+        Number of folds: 7120968
     '''
-    is_sarsa = False
-    policy_name = 'eps_greedy'
+    is_sarsa = True
+    policy_name = 'softmax'
     q_values_path = helpers.get_q_values_path(is_sarsa, policy_name)
     q = helpers.get_q_values_object(q_values_path)
+    # q = helpers.initialize_q()
 
+    num_bets, num_folds = 0, 0
     num_games = 10**7
     for i in range(num_games):
         if i > 0.5 * num_games:
             ALPHA *= 0.5    # reduce learning rate
         if i % 1000000 == 0:
             print(f'Game index {i}')
-        q = simulate_game(q, policy_name, is_sarsa)
+        q, num_bets, num_folds = simulate_game(q, policy_name, is_sarsa, num_bets, num_folds)
 
     changed = get_num_changed_states(q)
-    print(changed)
-    # helpers.dump_object(q, q_values_path)
+    print(f'Num states changed: {changed}')
+    print(f'Num bets made: {num_bets}')
+    print(f'Num folds made: {num_folds}')
+    helpers.dump_object(q, q_values_path)
