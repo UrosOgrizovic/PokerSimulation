@@ -35,10 +35,7 @@ def sarsa_q_learning(q, s, a, alpha, r, gamma, s_prime, is_sarsa=True, policy_na
                         matters only if is_sarsa is True
 
     """
-    if is_sarsa:
-        a_prime = get_action_by_policy_name(q, s_prime, policy_name)
-    else:
-        a_prime = greedy_policy(q[s_prime])  # use greedy policy for q-learning
+    a_prime = get_action_by_policy_name(q, s_prime, policy_name, is_sarsa)
 
     new_q_value = q[s_prime][a_prime]
 
@@ -77,7 +74,7 @@ def simulate_game(q, policy_name, is_sarsa):
 
     while not is_game_over:
         best_hand = get_best_hand(cards_on_table)
-        a = get_action_by_policy_name(q, best_hand, policy_name)
+        a = get_action_by_policy_name(q, best_hand, policy_name, is_sarsa)
 
         states_actions[best_hand] = a
         if len(cards_on_table) < 7: # if river, don't add any cards

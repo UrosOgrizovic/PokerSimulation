@@ -52,20 +52,24 @@ def softmax_policy(q):
     return best_action if probs_actions[best_action] >= rand_prob else worst_action
 
 
-def get_action_by_policy_name(q_values, state, policy_name):
+def get_action_by_policy_name(q_values, state, policy_name, is_sarsa):
     """
     get action for q value and a specific policy
 
     q_values (dict): all q_values
     state (set): current hand of length 5
     policy_name (string): the name of the policy to be adopted
+    is_sarsa (boolean): True (sarsa) or False (q-learning)
     """
-    if policy_name == 'greedy':
+    if not is_sarsa:    # use greedy policy for q-learning
         action = greedy_policy(q_values[state])
-    elif policy_name == 'eps_greedy':
-        action = eps_greedy_policy(q_values[state])
-    elif policy_name == 'softmax':
-        action = softmax_policy(q_values[state])
     else:
-        raise ValueError("Invalid policy name")
+        if policy_name == 'greedy':
+            action = greedy_policy(q_values[state])
+        elif policy_name == 'eps_greedy':
+            action = eps_greedy_policy(q_values[state])
+        elif policy_name == 'softmax':
+            action = softmax_policy(q_values[state])
+        else:
+            raise ValueError("Invalid policy name")
     return action
