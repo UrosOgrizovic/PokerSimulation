@@ -57,7 +57,7 @@ def get_best_hand(cards):
     return sort_cards(best_hand)
 
 
-def simulate_game(q, policy_name, is_sarsa, num_bets, num_folds):
+def simulate_game(q, policy_name, is_sarsa, num_bets, num_folds, total_score):
     used_cards = set()
     states_actions = {} # actions for hands of first player (i.e. bot)
     hand1 = sort_cards((get_random_card(used_cards), get_random_card(used_cards)))
@@ -130,7 +130,7 @@ def simulate_game(q, policy_name, is_sarsa, num_bets, num_folds):
     #     print([DECK_DICTIONARY[card] for card in state], action)
     # print('Game over')
 
-    return q, num_bets, num_folds
+    return q, num_bets, num_folds, total_score + reward
 
 
 def get_num_changed_states(q):
@@ -153,34 +153,40 @@ if __name__ == '__main__':
         Number of states changed: 2592084
         Number of bets: 45321468
         Number of folds: 93473472
+        Total score: 1344995.70
     SARSA (softmax policy):
         Number of games simulated: 10^8
         Number of states changed: 2180564
         Number of bets: 17153597
         Number of folds: 99616300
+        Total score: 1911379.7
     SARSA (eps_greedy policy):
         Number of games simulated: 10^8
         Number of states changed: 2598760
         Number of bets: 80094992
         Number of folds: 89127500
+        Total score: 2374996.5
     '''
-    is_sarsa = False
-    policy_name = 'greedy'
+    is_sarsa = True
+    policy_name = 'eps_greedy'
     q_values_path = helpers.get_q_values_path(is_sarsa, policy_name)
     q = helpers.get_q_values_object(q_values_path)
     # q = helpers.initialize_q()
 
-    num_bets, num_folds = 0, 0
-    num_games = 10**8
+    num_bets, num_folds, total_score = 0, 0, 0
+    num_games = 10**7
     for i in range(num_games):
         if i > 0.5 * num_games:
             ALPHA *= 0.5    # reduce learning rate
-        if i % 10**7 == 0:
+        if i % 10**6 == 0:
             print(f'Game index {i}')
-        q, num_bets, num_folds = simulate_game(q, policy_name, is_sarsa, num_bets, num_folds)
+        q, num_bets, num_folds, total_score = simulate_game(q, policy_name,
+                                                            is_sarsa, num_bets,
+                                                            num_folds, total_score)
 
     changed = get_num_changed_states(q)
     print(f'Num states changed: {changed}')
     print(f'Num bets made: {num_bets}')
     print(f'Num folds made: {num_folds}')
+    print(f'Total score: {round(total_score, 2)}')
     # helpers.dump_object(q, q_values_path)
