@@ -1,4 +1,11 @@
-from helpers import combinations
+from cards import combinations
+
+
+def handvalues(combs):
+    # iterate over all combinations scoring them
+    scores = {comb: score_hand(comb, False) for comb in combs}
+    return scores
+
 
 def check_four_of_a_kind(numbers):
     for num in numbers:

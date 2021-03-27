@@ -1,7 +1,6 @@
 import numpy as np
-from constants import DECK, c_5, ALPHA, GAMMA, DECK_DICTIONARY,\
-                      hand_values_c_5
-from cards import get_random_card
+from constants import DECK, ALPHA, GAMMA, DECK_DICTIONARY
+from cards import get_random_card, combinations
 import helpers
 from score import score_hand, score_hands
 from policy import greedy_policy, eps_greedy_policy, softmax_policy,\
@@ -49,7 +48,7 @@ def sort_cards(cards):
 
 def get_best_hand(cards):
     best_hand, best_score = (), 0
-    for comb in helpers.combinations(cards, 5):
+    for comb in combinations(cards, 5):
         # use cached values instead of calling score_hand()
         val, _ = hand_values_c_5[tuple(sorted(comb))]
         if val > best_score:
@@ -76,7 +75,7 @@ def simulate_game(q, policy_name, is_sarsa, num_bets, num_folds, total_score):
         for _ in range(3):  # generate flop
             cards_on_table.append(get_random_card(used_cards))
 
-        # this is s_prime for s=hand1, i.e. the flop is s_prime for preflop
+        # this is s_prime for s = hand1, i.e. flop is s_prime for preflop
         s_primes.append(get_best_hand(cards_on_table))
 
         while not is_game_over:
@@ -167,6 +166,8 @@ if __name__ == '__main__':
         Number of folds: 89127500
         Total score: 2374996.5
     '''
+    helpers.initialize_files()
+    exit()
     is_sarsa = True
     policy_name = 'eps_greedy'
     q_values_path = helpers.get_q_values_path(is_sarsa, policy_name)
@@ -174,17 +175,18 @@ if __name__ == '__main__':
     # q = helpers.initialize_q()
 
     num_bets, num_folds, total_score = 0, 0, 0
-    num_games = 10**7
+    num_games = 10**3
     for i in range(num_games):
         if i > 0.5 * num_games:
             ALPHA *= 0.5    # reduce learning rate
-        if i % 10**6 == 0:
-            print(f'Game index {i}')
+        # if i % 10**6 == 0:
+        #     print(f'Game index {i}')
         q, num_bets, num_folds, total_score = simulate_game(q, policy_name,
                                                             is_sarsa, num_bets,
                                                             num_folds, total_score)
 
     changed = get_num_changed_states(q)
+    print(f'Policy name: {policy_name}')
     print(f'Num states changed: {changed}')
     print(f'Num bets made: {num_bets}')
     print(f'Num folds made: {num_folds}')

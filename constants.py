@@ -1,4 +1,4 @@
-import helpers
+import os
 
 """2 - 14 - hearts
    17 - 29 - spades
@@ -21,15 +21,5 @@ DECK_DICTIONARY = {2: '2H', 3: '3H', 4: '4H', 5: '5H', 6: '6H', 7: '7H', 8: '8H'
                    47: '2D', 48: '3D', 49: '4D', 50: '5D', 51: '6D', 52: '7D', 53: '8D', 54: '9D',
                    55: '10D', 56: '12D', 57: '13D', 58: '14D', 59: 'AD',}
 
-c_2 = helpers.load_object('c_2.pkl')
-c_5 = helpers.load_object('c_5.pkl')
-hand_values_c_5 = helpers.load_object('hand_values_c_5.pkl')   # {hand: (score, handtype)}
-
 ALPHA = 0.6
 GAMMA = 0.4
-
-if __name__ == '__main__':
-   print(type(c_5))
-   for val in c_5:
-      print(val, type(val))
-      break
