@@ -52,7 +52,7 @@ def initialize_files():
     hand_values = load_object('hand_values_c_5.pkl')
 
     should_dump = False
-    if c_2 is None or c_5 is None or states is None or hand_values is None
+    if c_2 is None or c_5 is None or states is None or hand_values is None:
         should_dump = True
 
     c_2 = combinations(DECK, 2) if c_2 is None else c_2
@@ -64,3 +64,5 @@ def initialize_files():
     if should_dump:
         for i in range(len(objects)):
             dump_object(objects[i], file_names[i])
+
+    return objects

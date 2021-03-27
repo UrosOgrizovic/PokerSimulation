@@ -166,8 +166,7 @@ if __name__ == '__main__':
         Number of folds: 89127500
         Total score: 2374996.5
     '''
-    helpers.initialize_files()
-    exit()
+    _, _, _, hand_values_c_5 = helpers.initialize_files()
     is_sarsa = True
     policy_name = 'eps_greedy'
     q_values_path = helpers.get_q_values_path(is_sarsa, policy_name)
