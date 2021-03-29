@@ -117,17 +117,17 @@ def simulate_game(q, policy_name, is_sarsa, num_bets, num_folds, total_score):
         sarsa_q_learning(q, state, action, ALPHA, reward, GAMMA, s_primes[idx], is_sarsa, policy_name)
         idx += 1
 
-    # print([DECK_DICTIONARY[card] for card in used_cards])
-    # print([DECK_DICTIONARY[card] for card in hand1], val1)
-    # print(f'Best h1 {[DECK_DICTIONARY[card] for card in best_h1]} {handtype1}')
-    # print([DECK_DICTIONARY[card] for card in hand2], val2)
-    # print(f'Best h2 {[DECK_DICTIONARY[card] for card in best_h2]} {handtype2}')
-    # print(f'Cards on table {[DECK_DICTIONARY[card] for card in cards_on_table]}')
-    # print(f'Reward {reward}')
+    print(f'Used cards {[DECK_DICTIONARY[card] for card in used_cards]}')
+    print(f'h1 and value of h1 {[DECK_DICTIONARY[card] for card in hand1], val1}')
+    print(f'Best h1 {[DECK_DICTIONARY[card] for card in best_h1]} {handtype1}')
+    print(f'h2 and value of h2 {[DECK_DICTIONARY[card] for card in hand2], val2}')
+    print(f'Best h2 {[DECK_DICTIONARY[card] for card in best_h2]} {handtype2}')
+    print(f'Cards on table {[DECK_DICTIONARY[card] for card in cards_on_table]}')
+    print(f'Reward {reward}')
 
-    # for state, action in states_actions.items():
-    #     print([DECK_DICTIONARY[card] for card in state], action)
-    # print('Game over')
+    for state, action in states_actions.items():
+        print([DECK_DICTIONARY[card] for card in state], action)
+    print('Game over')
 
     return q, num_bets, num_folds, total_score + reward
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # q = helpers.initialize_q()
 
     num_bets, num_folds, total_score = 0, 0, 0
-    num_games = 10**3
+    num_games = 1
     for i in range(num_games):
         if i > 0.5 * num_games:
             ALPHA *= 0.5    # reduce learning rate
